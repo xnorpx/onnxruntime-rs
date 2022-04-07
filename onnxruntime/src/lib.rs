@@ -141,7 +141,6 @@ macro_rules! extern_system_fn {
     ($(#[$meta:meta])* $vis:vis unsafe fn $($tt:tt)*) => ($(#[$meta])* $vis unsafe extern "C" fn $($tt)*);
 }
 
-pub mod download;
 pub mod environment;
 pub mod error;
 mod memory;
