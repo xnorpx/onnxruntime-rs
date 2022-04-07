@@ -34,26 +34,39 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-      - run: rustup target install x86_64-unknown-linux-gnu
-      - run: rustup target install x86_64-apple-darwin
-      - run: rustup target install i686-pc-windows-msvc
-      - run: rustup target install x86_64-pc-windows-msvc
+      - name: Install Rust Toolchains's Supported Targets
+        run: rustup target install
+          aarch64-apple-darwin
+          aarch64-pc-windows-msvc
+          aarch64-unknown-linux-gnu
+          i686-pc-windows-msvc
+          x86_64-apple-darwin
+          x86_64-pc-windows-msvc
+          x86_64-unknown-linux-gnu
       # ******************************************************************
-      - name: Download prebuilt archive (CPU, x86_64-unknown-linux-gnu)
+      - name: Download prebuilt archive (CPU, aarch64-apple-darwin)
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target x86_64-unknown-linux-gnu
-      - name: Verify prebuilt archive downloaded (CPU, x86_64-unknown-linux-gnu)
-        run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
+          args: --target aarch64-apple-darwin
+      - name: Verify prebuilt archive downloaded (CPU, aarch64-apple-darwin)
+        run: ls -lh target/aarch64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
       # ******************************************************************
-      - name: Download prebuilt archive (CPU, x86_64-apple-darwin)
+      - name: Download prebuilt archive (CPU, aarch64-pc-windows-msvc)
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target x86_64-apple-darwin
-      - name: Verify prebuilt archive downloaded (CPU, x86_64-apple-darwin)
-        run: ls -lh target/x86_64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
+          args: --target aarch64-pc-windows-msvc
+      - name: Verify prebuilt archive downloaded (CPU, aarch64-pc-windows-msvc)
+        run: ls -lh target/aarch64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
+      # ******************************************************************
+      - name: Download prebuilt archive (CPU, aarch64-unknown-linux-gnu)
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target aarch64-unknown-linux-gnu
+      - name: Verify prebuilt archive downloaded (CPU, aarch64-unknown-linux-gnu)
+        run: ls -lh target/aarch64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
       # ******************************************************************
       - name: Download prebuilt archive (CPU, i686-pc-windows-msvc)
         uses: actions-rs/cargo@v1
@@ -63,6 +76,14 @@ jobs:
       - name: Verify prebuilt archive downloaded (CPU, i686-pc-windows-msvc)
         run: ls -lh target/i686-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x86-1.*.zip
       # ******************************************************************
+      - name: Download prebuilt archive (CPU, x86_64-apple-darwin)
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target x86_64-apple-darwin
+      - name: Verify prebuilt archive downloaded (CPU, x86_64-apple-darwin)
+        run: ls -lh target/x86_64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
+      # ******************************************************************
       - name: Download prebuilt archive (CPU, x86_64-pc-windows-msvc)
         uses: actions-rs/cargo@v1
         with:
@@ -70,6 +91,24 @@ jobs:
           args: --target x86_64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, x86_64-pc-windows-msvc)
         run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
+      # ******************************************************************
+      - name: Download prebuilt archive (CPU, x86_64-unknown-linux-gnu)
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --target x86_64-unknown-linux-gnu
+      - name: Verify prebuilt archive downloaded (CPU, x86_64-unknown-linux-gnu)
+        run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
+      # ******************************************************************
+      - name: Download prebuilt archive (GPU, x86_64-pc-windows-msvc)
+        uses: actions-rs/cargo@v1
+        env:
+          ORT_USE_CUDA: "yes"
+        with:
+          command: build
+          args: --target x86_64-pc-windows-msvc
+      - name: Verify prebuilt archive downloaded (GPU, x86_64-pc-windows-msvc)
+        run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-gpu-x64-1.*.zip
       # ******************************************************************
       - name: Download prebuilt archive (GPU, x86_64-unknown-linux-gnu)
         uses: actions-rs/cargo@v1
@@ -81,15 +120,6 @@ jobs:
       - name: Verify prebuilt archive downloaded (GPU, x86_64-unknown-linux-gnu)
         run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-gpu-1.*.tgz
       # ******************************************************************
-      - name: Download prebuilt archive (GPU, x86_64-pc-windows-msvc)
-        uses: actions-rs/cargo@v1
-        env:
-          ORT_USE_CUDA: "yes"
-        with:
-          command: build
-          args: --target x86_64-pc-windows-msvc
-      - name: Verify prebuilt archive downloaded (GPU, x86_64-pc-windows-msvc)
-        run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-gpu-x64-1.*.zip
 
   test:
     name: Test Suite
@@ -98,21 +128,28 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          [
-            x86_64-unknown-linux-gnu,
-            x86_64-apple-darwin,
-            x86_64-pc-windows-msvc,
-            i686-pc-windows-msvc,
-          ]
+          # - aarch64-apple-darwin
+          # - aarch64-pc-windows-msvc
+          # - aarch64-unknown-linux-gnu
+          - i686-pc-windows-msvc
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - x86_64-unknown-linux-gnu
         include:
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+          # - target: aarch64-apple-darwin
+          #   os: macos-latest
+          # - target: aarch64-pc-windows-msvc
+          #   os: windows-latest
+          # - target: aarch64-unknown-linux-gnu
+          #   os: ubuntu-latest
+          - target: i686-pc-windows-msvc
+            os: windows-latest
           - target: x86_64-apple-darwin
             os: macos-latest
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-          - target: i686-pc-windows-msvc
-            os: windows-latest
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
     env:
       CARGO_BUILD_TARGET: ${{ matrix.target }}
     steps:
@@ -125,7 +162,7 @@ jobs:
           target: ${{ matrix.target }}
           override: true
       - name: Install additional packages (macOS)
-        if: contains(matrix.target, 'x86_64-apple-darwin')
+        if: contains(matrix.target, '-apple-darwin')
         run: brew install libomp
       - name: Build (cargo build)
         uses: actions-rs/cargo@v1

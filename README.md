@@ -7,23 +7,25 @@
 [![codecov](https://codecov.io/gh/nbigaouette/onnxruntime-rs/branch/master/graph/badge.svg)](https://codecov.io/gh/nbigaouette/onnxruntime-rs)
 
 This is an attempt at a Rust wrapper for
-[Microsoft's ONNX Runtime](https://github.com/microsoft/onnxruntime) (version 1.8).
+[Microsoft's ONNX Runtime](https://github.com/microsoft/onnxruntime) (version 1.11).
 
 This project consist on two crates:
 
-* [`onnxruntime-sys`](onnxruntime-sys): Low-level binding to the C API;
+* [`onnxruntime-sys`](onnxruntime-sys): Low-level binding to the C API; 
 * [`onnxruntime`](onnxruntime): High-level and safe API.
 
 [Changelog](CHANGELOG.md)
 
-The `build.rs` script supports downloading pre-built versions of the Microsoft ONNX Runtime,
+The `build.rs` script supports downloading pre-built versions of the Microsoft ONNX Runtime, 
 which provides the following targets:
 
 CPU:
 
+* Linux aarch64
 * Linux x86_64
+* macOS aarch64
 * macOS x86_64
-* macOS aarch64 (no pre-built binaries, no CI testing, see [#74](https://github.com/nbigaouette/onnxruntime-rs/pull/74))
+* Windows aarch64
 * Windows i686
 * Windows x86_64
 
@@ -53,7 +55,7 @@ Three different strategy to obtain the ONNX Runtime are supported by the `build.
 
 To select which strategy to use, set the `ORT_STRATEGY` environment variable to:
 
-1. `download`: This is the default if `ORT_STRATEGY` is not set;
+1. `download`: This is the default if `ORT_STRATEGY` is not set; 
 2. `system`: To use a locally installed version (use `ORT_LIB_LOCATION` environment variable to point to the install path)
 3. `compile`: To compile the library
 
@@ -65,7 +67,7 @@ for some details on the process.
 
 ### Note on 'ORT_STRATEGY=system'
 
-When using `ORT_STRATEGY=system`, executing a built crate binary (for example the tests) might fail, at least on macOS,
+When using `ORT_STRATEGY=system` , executing a built crate binary (for example the tests) might fail, at least on macOS, 
 if the library is not installed in a system path. An error similar to the following happens:
 
 ```text
@@ -78,23 +80,23 @@ To fix, one can either:
 
 * Set the `LD_LIBRARY_PATH` environment variable to point to the path where the library can be found.
 * Adapt the `.cargo/config` file to contain a linker flag to provide the **full** path:
-  
-  ```toml
+
+```toml
   [target.aarch64-apple-darwin]
   rustflags = ["-C", "link-args=-Wl,-rpath,/full/path/to/onnxruntime/lib"]
-  ```
+```
 
 See [rust-lang/cargo #5077](https://github.com/rust-lang/cargo/issues/5077) for more information.
 
 ## Example
 
 The C++ example that uses the C API
-([`C_Api_Sample.cpp`](https://github.com/microsoft/onnxruntime/blob/v1.3.1/csharp/test/Microsoft.ML.OnnxRuntime.EndToEndTests.Capi/C_Api_Sample.cpp))
-was ported to both the low level crate (`onnxruntime-sys`) and the high level on (`onnxruntime`).
+([ `C_Api_Sample.cpp` ](https://github.com/microsoft/onnxruntime/blob/v1.3.1/csharp/test/Microsoft. ML. OnnxRuntime. EndToEndTests. Capi/C_Api_Sample.cpp))
+was ported to both the low level crate ( `onnxruntime-sys` ) and the high level on ( `onnxruntime` ).
 
 ### onnxruntime-sys
 
-To run this example ([`onnxruntime-sys/examples/c_api_sample.rs`](onnxruntime-sys/examples/c_api_sample.rs)):
+To run this example ([ `onnxruntime-sys/examples/c_api_sample.rs` ](onnxruntime-sys/examples/c_api_sample.rs)):
 
 ```sh
 # Download the model (SqueezeNet 1.0, ONNX version: 1.3, Opset version: 8)
@@ -146,7 +148,7 @@ Done!
 
 ### onnxruntime
 
-To run this example ([`onnxruntime/examples/sample.rs`](onnxruntime/examples/sample.rs)):
+To run this example ([ `onnxruntime/examples/sample.rs` ](onnxruntime/examples/sample.rs)):
 
 ```sh
 # Download the model (SqueezeNet 1.0, ONNX version: 1.3, Opset version: 8)
@@ -193,12 +195,12 @@ Dropping the memory information.
 Dropping the environment.
 ```
 
-See also the integration tests ([`onnxruntime/tests/integration_tests.rs`](onnxruntime/tests/integration_tests.rs))
+See also the integration tests ([ `onnxruntime/tests/integration_tests.rs` ](onnxruntime/tests/integration_tests.rs))
 that performs simple model download and inference, validating the results.
 
 ## Bindings Generation
 
-Bindings (the basis of `onnxruntime-sys`) are committed to the git repository. This means `bindgen` is not
+Bindings (the basis of `onnxruntime-sys` ) are committed to the git repository. This means `bindgen` is not
 a dependency anymore on every build (it was made optional) and thus build times are better.
 
 To generate new bindings (for example if they don't exists for your platform or if a version bump occurred), build the crate with the `generate-bindings` feature.

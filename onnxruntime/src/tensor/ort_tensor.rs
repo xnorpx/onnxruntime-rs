@@ -30,6 +30,7 @@ where
 {
     pub(crate) c_ptr: *mut sys::OrtValue,
     array: Array<T, D>,
+    #[allow(dead_code)]
     memory_info: &'t MemoryInfo,
 }
 
@@ -198,7 +199,7 @@ mod tests {
     use crate::{AllocatorType, MemType};
     use ndarray::{arr0, arr1, arr2, arr3};
     use std::ptr;
-    use test_env_log::test;
+    use test_log::test;
 
     #[test]
     fn orttensor_from_array_0d_i32() {
