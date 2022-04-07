@@ -1,4 +1,14 @@
 {
     "rust-analyzer.checkOnSave.command": "clippy",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "files.exclude": {
+        "**/target": true,
+        "**/*.venv": true,
+        "**/*.onnx": true,
+        "**/*.dSYM": true,
+        "**/onnxruntime.git": true,
+        "**/Cargo.lock": true,
+        "**/synset.txt": true,
+        ".idea": true
+    }
 }
