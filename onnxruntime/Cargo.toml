@@ -14,10 +14,6 @@ repository = "https://github.com/nbigaouette/onnxruntime-rs"
 categories = ["science"]
 keywords = ["neuralnetworks", "onnx", "bindings"]
 
-[[test]]
-name = "integration_tests"
-required-features = ["model-fetching"]
-
 [dependencies]
 onnxruntime-sys = { version = "0.0.14", path = "../onnxruntime-sys" }
 
@@ -26,18 +22,12 @@ ndarray = "0.15"
 thiserror = "1.0"
 tracing = "0.1"
 
-# Enabled with 'model-fetching' feature
-ureq = { version = "2.1", optional = true }
-
 [dev-dependencies]
 image = "0.23"
 test-log = { version = "0.2", default-features = false, features = ["trace"] }
 tracing-subscriber = "0.2"
-ureq = "2.1"
 
 [features]
-# Fetch model from ONNX Model Zoo (https://github.com/onnx/models)
-model-fetching = ["ureq"]
 # Disable build script; used for https://docs.rs
 disable-sys-build-script = ["onnxruntime-sys/disable-sys-build-script"]
 generate-bindings = ["onnxruntime-sys/generate-bindings"]
