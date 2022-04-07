@@ -1,6 +1,8 @@
 name: Rust
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
 
 env:
   CARGO_TERM_COLOR: always
@@ -48,7 +50,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target aarch64-apple-darwin
+          args: --features generate-bindings --target aarch64-apple-darwin
       - name: Verify prebuilt archive downloaded (CPU, aarch64-apple-darwin)
         run: ls -lh target/aarch64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
       # ******************************************************************
@@ -56,7 +58,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target aarch64-pc-windows-msvc
+          args: --features generate-bindings --target aarch64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, aarch64-pc-windows-msvc)
         run: ls -lh target/aarch64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
       # ******************************************************************
@@ -64,7 +66,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target aarch64-unknown-linux-gnu
+          args: --features generate-bindings --target aarch64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (CPU, aarch64-unknown-linux-gnu)
         run: ls -lh target/aarch64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
       # ******************************************************************
@@ -72,7 +74,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target i686-pc-windows-msvc
+          args: --features generate-bindings --target i686-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, i686-pc-windows-msvc)
         run: ls -lh target/i686-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x86-1.*.zip
       # ******************************************************************
@@ -80,7 +82,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target x86_64-apple-darwin
+          args: --features generate-bindings --target x86_64-apple-darwin
       - name: Verify prebuilt archive downloaded (CPU, x86_64-apple-darwin)
         run: ls -lh target/x86_64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
       # ******************************************************************
@@ -88,7 +90,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target x86_64-pc-windows-msvc
+          args: --features generate-bindings --target x86_64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, x86_64-pc-windows-msvc)
         run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
       # ******************************************************************
@@ -96,7 +98,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target x86_64-unknown-linux-gnu
+          args: --features generate-bindings --target x86_64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (CPU, x86_64-unknown-linux-gnu)
         run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
       # ******************************************************************
@@ -106,7 +108,7 @@ jobs:
           ORT_USE_CUDA: "yes"
         with:
           command: build
-          args: --target x86_64-pc-windows-msvc
+          args: --features generate-bindings --target x86_64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (GPU, x86_64-pc-windows-msvc)
         run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-gpu-x64-1.*.zip
       # ******************************************************************
@@ -116,7 +118,7 @@ jobs:
           ORT_USE_CUDA: "yes"
         with:
           command: build
-          args: --target x86_64-unknown-linux-gnu
+          args: --features generate-bindings --target x86_64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (GPU, x86_64-unknown-linux-gnu)
         run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-gpu-1.*.tgz
       # ******************************************************************
@@ -168,29 +170,23 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --all
+          args: --features generate-bindings --all
       - name: Build tests (cargo test)
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-run
-      - name: Build onnxruntime with 'model-fetching' feature
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          # Use --manifest-path instead of --package. See https://github.com/actions-rs/cargo/issues/86
-          args: --manifest-path onnxruntime/Cargo.toml --features model-fetching
+          args: --features generate-bindings --no-run
       - name: Test onnxruntime-sys
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --package onnxruntime-sys -- --test-threads=1 --nocapture
+          args: --features generate-bindings --package onnxruntime-sys -- --test-threads=1 --nocapture
       - name: Test onnxruntime
         uses: actions-rs/cargo@v1
         with:
           command: test
           # Use --manifest-path instead of --package. See https://github.com/actions-rs/cargo/issues/86
-          args: --manifest-path onnxruntime/Cargo.toml --features model-fetching -- --test-threads=1 --nocapture
+          args: --features generate-bindings --manifest-path onnxruntime/Cargo.toml -- --test-threads=1 --nocapture
 
   clippy:
     name: Clippy
@@ -223,13 +219,13 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --package onnxruntime-sys
+          args: --features generate-bindings --package onnxruntime-sys
       - name: Copy libonnxruntime.*.dylib to /usr/lib/
         run: sudo cp -r target/debug/build/onnxruntime-sys-*/out/onnxruntime/onnxruntime-*/lib/libonnxruntime.* /usr/lib/
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
-          args: "--ignore-tests"
+          args: --ignore-tests
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v1
         with:

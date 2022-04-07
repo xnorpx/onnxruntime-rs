@@ -7,9 +7,6 @@ use std::os::unix::ffi::OsStrExt;
 #[cfg(target_family = "windows")]
 use std::os::windows::ffi::OsStrExt;
 
-#[cfg(feature = "model-fetching")]
-use std::env;
-
 use ndarray::Array;
 use tracing::{debug, error};
 
@@ -31,9 +28,6 @@ use crate::{
     AllocatorType, GraphOptimizationLevel, MemType, TensorElementDataType,
     TypeToTensorElementDataType,
 };
-
-#[cfg(feature = "model-fetching")]
-use crate::{download::AvailableOnnxModel, error::OrtDownloadError};
 
 /// Type used to create a session using the _builder pattern_
 ///
@@ -144,22 +138,6 @@ impl<'a> SessionBuilder<'a> {
     pub fn with_memory_type(mut self, memory_type: MemType) -> Result<SessionBuilder<'a>> {
         self.memory_type = memory_type;
         Ok(self)
-    }
-
-    /// Download an ONNX pre-trained model from the [ONNX Model Zoo](https://github.com/onnx/models) and commit the session
-    #[cfg(feature = "model-fetching")]
-    pub fn with_model_downloaded<M>(self, model: M) -> Result<Session<'a>>
-    where
-        M: Into<AvailableOnnxModel>,
-    {
-        self.with_model_downloaded_monomorphized(model.into())
-    }
-
-    #[cfg(feature = "model-fetching")]
-    fn with_model_downloaded_monomorphized(self, model: AvailableOnnxModel) -> Result<Session<'a>> {
-        let download_dir = env::current_dir().map_err(OrtDownloadError::IoError)?;
-        let downloaded_path = model.download_to(download_dir)?;
-        self.with_model_from_file(downloaded_path)
     }
 
     // TODO: Add all functions changing the options.
