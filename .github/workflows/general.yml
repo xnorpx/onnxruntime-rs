@@ -50,7 +50,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --features generate-bindings --target aarch64-apple-darwin
+          args: --target aarch64-apple-darwin
       - name: Verify prebuilt archive downloaded (CPU, aarch64-apple-darwin)
         run: ls -lh target/aarch64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
       # ******************************************************************
@@ -58,7 +58,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --features generate-bindings --target aarch64-pc-windows-msvc
+          args: --target aarch64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, aarch64-pc-windows-msvc)
         run: ls -lh target/aarch64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
       # ******************************************************************
@@ -66,7 +66,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --features generate-bindings --target aarch64-unknown-linux-gnu
+          args: --target aarch64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (CPU, aarch64-unknown-linux-gnu)
         run: ls -lh target/aarch64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
       # ******************************************************************
@@ -74,7 +74,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --features generate-bindings --target i686-pc-windows-msvc
+          args: --target i686-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, i686-pc-windows-msvc)
         run: ls -lh target/i686-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x86-1.*.zip
       # ******************************************************************
@@ -82,7 +82,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --features generate-bindings --target x86_64-apple-darwin
+          args: --target x86_64-apple-darwin
       - name: Verify prebuilt archive downloaded (CPU, x86_64-apple-darwin)
         run: ls -lh target/x86_64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
       # ******************************************************************
@@ -90,7 +90,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --features generate-bindings --target x86_64-pc-windows-msvc
+          args: --target x86_64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, x86_64-pc-windows-msvc)
         run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
       # ******************************************************************
@@ -98,7 +98,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --features generate-bindings --target x86_64-unknown-linux-gnu
+          args: --target x86_64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (CPU, x86_64-unknown-linux-gnu)
         run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
       # ******************************************************************
@@ -108,7 +108,7 @@ jobs:
           ORT_USE_CUDA: "yes"
         with:
           command: build
-          args: --features generate-bindings --target x86_64-pc-windows-msvc
+          args: --target x86_64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (GPU, x86_64-pc-windows-msvc)
         run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-gpu-x64-1.*.zip
       # ******************************************************************
@@ -118,7 +118,7 @@ jobs:
           ORT_USE_CUDA: "yes"
         with:
           command: build
-          args: --features generate-bindings --target x86_64-unknown-linux-gnu
+          args: --target x86_64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (GPU, x86_64-unknown-linux-gnu)
         run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-gpu-1.*.tgz
       # ******************************************************************
