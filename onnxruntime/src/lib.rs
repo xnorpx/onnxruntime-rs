@@ -130,14 +130,16 @@ pub use ndarray;
 lazy_static! {
     // static ref G_ORT: Arc<Mutex<AtomicPtr<sys::OrtApi>>> =
     //     Arc::new(Mutex::new(AtomicPtr::new(unsafe {
-    //         sys::OrtGetApiBase().as_ref().unwrap().GetApi.unwrap()(sys::ORT_API_VERSION)
+    //         sys::OrtGetApiBase().as_ref().unwrap().GetApi.unwrap()(
+    //             sys::ORT_API_VERSION_MULTI_PLATFORM,
+    //         )
     //     } as *mut sys::OrtApi)));
     static ref G_ORT_API: Arc<Mutex<AtomicPtr<sys::OrtApi>>> = {
         let base: *const sys::OrtApiBase = unsafe { sys::OrtGetApiBase() };
         assert_ne!(base, std::ptr::null());
-        let get_api: extern_system_fn!{ unsafe fn(u32) -> *const onnxruntime_sys::OrtApi } =
+        let get_api: extern_system_fn! { unsafe fn(u32) -> *const onnxruntime_sys::OrtApi } =
             unsafe { (*base).GetApi.unwrap() };
-        let api: *const sys::OrtApi = unsafe { get_api(sys::ORT_API_VERSION) };
+        let api: *const sys::OrtApi = unsafe { get_api(sys::ORT_API_VERSION_MULTI_PLATFORM) };
         Arc::new(Mutex::new(AtomicPtr::new(api as *mut sys::OrtApi)))
     };
 }
