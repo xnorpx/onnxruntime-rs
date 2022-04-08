@@ -1,6 +1,6 @@
 //! Module containing error definitions.
 
-use std::path::PathBuf;
+use std::{os::raw::c_char, path::PathBuf};
 
 use thiserror::Error;
 
@@ -180,7 +180,7 @@ impl From<OrtStatusWrapper> for std::result::Result<(), OrtApiError> {
         if status.0.is_null() {
             Ok(())
         } else {
-            let raw: *const i8 = unsafe { g_ort().GetErrorMessage.unwrap()(status.0) };
+            let raw: *const c_char = unsafe { g_ort().GetErrorMessage.unwrap()(status.0) };
             match char_p_to_string(raw) {
                 Ok(msg) => Err(OrtApiError::Msg(msg)),
                 Err(err) => match err {
