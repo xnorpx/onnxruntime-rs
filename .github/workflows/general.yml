@@ -52,7 +52,7 @@ jobs:
           command: build
           args: --target aarch64-apple-darwin
       - name: Verify prebuilt archive downloaded (CPU, aarch64-apple-darwin)
-        run: ls -lh target/aarch64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
+        run: ls -lh target/aarch64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-arm64-*.tgz
       # ******************************************************************
       - name: Download prebuilt archive (CPU, aarch64-pc-windows-msvc)
         uses: actions-rs/cargo@v1
@@ -60,7 +60,7 @@ jobs:
           command: build
           args: --target aarch64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, aarch64-pc-windows-msvc)
-        run: ls -lh target/aarch64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
+        run: ls -lh target/aarch64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-arm64-*.zip
       # ******************************************************************
       - name: Download prebuilt archive (CPU, aarch64-unknown-linux-gnu)
         uses: actions-rs/cargo@v1
@@ -68,7 +68,7 @@ jobs:
           command: build
           args: --target aarch64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (CPU, aarch64-unknown-linux-gnu)
-        run: ls -lh target/aarch64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
+        run: ls -lh target/aarch64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-aarch64-*.tgz
       # ******************************************************************
       - name: Download prebuilt archive (CPU, i686-pc-windows-msvc)
         uses: actions-rs/cargo@v1
@@ -76,7 +76,7 @@ jobs:
           command: build
           args: --target i686-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, i686-pc-windows-msvc)
-        run: ls -lh target/i686-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x86-1.*.zip
+        run: ls -lh target/i686-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x86-*.zip
       # ******************************************************************
       - name: Download prebuilt archive (CPU, x86_64-apple-darwin)
         uses: actions-rs/cargo@v1
@@ -84,7 +84,7 @@ jobs:
           command: build
           args: --target x86_64-apple-darwin
       - name: Verify prebuilt archive downloaded (CPU, x86_64-apple-darwin)
-        run: ls -lh target/x86_64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x64-1.*.tgz
+        run: ls -lh target/x86_64-apple-darwin/debug/build/onnxruntime-sys-*/out/onnxruntime-osx-x86_64-*.tgz
       # ******************************************************************
       - name: Download prebuilt archive (CPU, x86_64-pc-windows-msvc)
         uses: actions-rs/cargo@v1
@@ -92,7 +92,7 @@ jobs:
           command: build
           args: --target x86_64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (CPU, x86_64-pc-windows-msvc)
-        run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-1.*.zip
+        run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-*.zip
       # ******************************************************************
       - name: Download prebuilt archive (CPU, x86_64-unknown-linux-gnu)
         uses: actions-rs/cargo@v1
@@ -100,7 +100,7 @@ jobs:
           command: build
           args: --target x86_64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (CPU, x86_64-unknown-linux-gnu)
-        run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-1.*.tgz
+        run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-*.tgz
       # ******************************************************************
       - name: Download prebuilt archive (GPU, x86_64-pc-windows-msvc)
         uses: actions-rs/cargo@v1
@@ -110,7 +110,7 @@ jobs:
           command: build
           args: --target x86_64-pc-windows-msvc
       - name: Verify prebuilt archive downloaded (GPU, x86_64-pc-windows-msvc)
-        run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-gpu-x64-1.*.zip
+        run: ls -lh target/x86_64-pc-windows-msvc/debug/build/onnxruntime-sys-*/out/onnxruntime-win-x64-gpu-*.zip
       # ******************************************************************
       - name: Download prebuilt archive (GPU, x86_64-unknown-linux-gnu)
         uses: actions-rs/cargo@v1
@@ -120,7 +120,7 @@ jobs:
           command: build
           args: --target x86_64-unknown-linux-gnu
       - name: Verify prebuilt archive downloaded (GPU, x86_64-unknown-linux-gnu)
-        run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-gpu-1.*.tgz
+        run: ls -lh target/x86_64-unknown-linux-gnu/debug/build/onnxruntime-sys-*/out/onnxruntime-linux-x64-gpu-*.tgz
       # ******************************************************************
 
   test:
