@@ -39,7 +39,7 @@ GPU:
 **WARNING**:
 
 * This is an experiment and work in progress; it is _not_ complete/working/safe. Help welcome!
-* Basic inference works, see [`onnxruntime/examples/sample.rs`](onnxruntime/examples/sample.rs) or [`onnxruntime/tests/integration_tests.rs`](onnxruntime/tests/integration_tests.rs)
+* Basic inference works, see [`onnxruntime/examples/sample.rs`](onnxruntime/examples/sample.rs).
 * ONNX Runtime has many options to control the inference process but those options are not yet exposed.
 * This was developed and tested on macOS Catalina. Other platforms should work but have not been tested.
 
@@ -100,7 +100,7 @@ To run this example ([ `onnxruntime-sys/examples/c_api_sample.rs` ](onnxruntime-
 
 ```sh
 # Download the model (SqueezeNet 1.0, ONNX version: 1.3, Opset version: 8)
-❯ curl -LO "https://github.com/onnx/models/raw/master/vision/classification/squeezenet/model/squeezenet1.0-8.onnx"
+❯ curl -LO "https://media.githubusercontent.com/media/onnx/models/main/vision/classification/squeezenet/model/squeezenet1.0-8.onnx"
 ❯ cargo run --example c_api_sample
 [...]
     Finished dev [unoptimized + debuginfo] target(s) in 1.88s
@@ -152,7 +152,7 @@ To run this example ([ `onnxruntime/examples/sample.rs` ](onnxruntime/examples/s
 
 ```sh
 # Download the model (SqueezeNet 1.0, ONNX version: 1.3, Opset version: 8)
-❯ curl -LO "https://github.com/onnx/models/raw/master/vision/classification/squeezenet/model/squeezenet1.0-8.onnx"
+❯ curl -LO "https://media.githubusercontent.com/media/onnx/models/main/vision/classification/squeezenet/model/squeezenet1.0-8.onnx"
 ❯ cargo run --example sample
 [...]
     Finished dev [unoptimized + debuginfo] target(s) in 13.62s
@@ -194,9 +194,6 @@ Dropping the session.
 Dropping the memory information.
 Dropping the environment.
 ```
-
-See also the integration tests ([ `onnxruntime/tests/integration_tests.rs` ](onnxruntime/tests/integration_tests.rs))
-that performs simple model download and inference, validating the results.
 
 ## Bindings Generation
 

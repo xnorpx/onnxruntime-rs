@@ -37,7 +37,7 @@ fn run() -> Result<(), Error> {
         .with_number_threads(1)?
         // NOTE: The example uses SqueezeNet 1.0 (ONNX version: 1.3, Opset version: 8).
         //       Obtain it with:
-        //          curl -LO "https://github.com/onnx/models/raw/master/vision/classification/squeezenet/model/squeezenet1.0-8.onnx"
+        //          curl -LO "https://media.githubusercontent.com/media/onnx/models/main/vision/classification/squeezenet/model/squeezenet1.0-8.onnx"
         .with_model_from_file("squeezenet1.0-8.onnx")?;
 
     let input0_shape: Vec<usize> = session.inputs[0].dimensions().map(|d| d.unwrap()).collect();
