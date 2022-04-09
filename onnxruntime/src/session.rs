@@ -65,15 +65,15 @@ use crate::{download::AvailableOnnxModel, error::OrtDownloadError};
 /// # }
 /// ```
 #[derive(Debug)]
-pub struct SessionBuilder<'a> {
-    env: &'a Environment,
+pub struct SessionBuilder {
+    env: Environment,
     session_options_ptr: *mut sys::OrtSessionOptions,
 
     allocator: AllocatorType,
     memory_type: MemType,
 }
 
-impl<'a> Drop for SessionBuilder<'a> {
+impl Drop for SessionBuilder {
     #[tracing::instrument]
     fn drop(&mut self) {
         if self.session_options_ptr.is_null() {
@@ -85,8 +85,8 @@ impl<'a> Drop for SessionBuilder<'a> {
     }
 }
 
-impl<'a> SessionBuilder<'a> {
-    pub(crate) fn new(env: &'a Environment) -> Result<SessionBuilder<'a>> {
+impl SessionBuilder {
+    pub(crate) fn new(env: &Environment) -> Result<SessionBuilder> {
         let mut session_options_ptr: *mut sys::OrtSessionOptions = std::ptr::null_mut();
         let status = unsafe { g_ort().CreateSessionOptions.unwrap()(&mut session_options_ptr) };
 
@@ -95,7 +95,7 @@ impl<'a> SessionBuilder<'a> {
         assert_not_null_pointer(session_options_ptr, "SessionOptions")?;
 
         Ok(SessionBuilder {
-            env,
+            env: env.clone(),
             session_options_ptr,
             allocator: AllocatorType::Arena,
             memory_type: MemType::Default,
@@ -103,7 +103,7 @@ impl<'a> SessionBuilder<'a> {
     }
 
     /// Configure the session to use a number of threads
-    pub fn with_number_threads(self, num_threads: i16) -> Result<SessionBuilder<'a>> {
+    pub fn with_number_threads(self, num_threads: i16) -> Result<SessionBuilder> {
         // FIXME: Pre-built binaries use OpenMP, set env variable instead
 
         // We use a u16 in the builder to cover the 16-bits positive values of a i32.
@@ -119,7 +119,7 @@ impl<'a> SessionBuilder<'a> {
     pub fn with_optimization_level(
         self,
         opt_level: GraphOptimizationLevel,
-    ) -> Result<SessionBuilder<'a>> {
+    ) -> Result<SessionBuilder> {
         // Sets graph optimization level
         unsafe {
             g_ort().SetSessionGraphOptimizationLevel.unwrap()(
@@ -133,7 +133,7 @@ impl<'a> SessionBuilder<'a> {
     /// Set the session's allocator
     ///
     /// Defaults to [`AllocatorType::Arena`](../enum.AllocatorType.html#variant.Arena)
-    pub fn with_allocator(mut self, allocator: AllocatorType) -> Result<SessionBuilder<'a>> {
+    pub fn with_allocator(mut self, allocator: AllocatorType) -> Result<SessionBuilder> {
         self.allocator = allocator;
         Ok(self)
     }
@@ -141,7 +141,7 @@ impl<'a> SessionBuilder<'a> {
     /// Set the session's memory type
     ///
     /// Defaults to [`MemType::Default`](../enum.MemType.html#variant.Default)
-    pub fn with_memory_type(mut self, memory_type: MemType) -> Result<SessionBuilder<'a>> {
+    pub fn with_memory_type(mut self, memory_type: MemType) -> Result<SessionBuilder> {
         self.memory_type = memory_type;
         Ok(self)
     }
@@ -166,9 +166,9 @@ impl<'a> SessionBuilder<'a> {
     //       See all OrtApi methods taking a `options: *mut OrtSessionOptions`.
 
     /// Load an ONNX graph from a file and commit the session
-    pub fn with_model_from_file<P>(self, model_filepath_ref: P) -> Result<Session<'a>>
+    pub fn with_model_from_file<P>(self, model_filepath_ref: P) -> Result<Session>
     where
-        P: AsRef<Path> + 'a,
+        P: AsRef<Path>,
     {
         let model_filepath = model_filepath_ref.as_ref();
         let mut session_ptr: *mut sys::OrtSession = std::ptr::null_mut();
@@ -227,7 +227,7 @@ impl<'a> SessionBuilder<'a> {
             .collect::<Result<Vec<Output>>>()?;
 
         Ok(Session {
-            env: self.env,
+            env: self.env.clone(),
             session_ptr,
             allocator_ptr,
             memory_info,
@@ -237,14 +237,14 @@ impl<'a> SessionBuilder<'a> {
     }
 
     /// Load an ONNX graph from memory and commit the session
-    pub fn with_model_from_memory<B>(self, model_bytes: B) -> Result<Session<'a>>
+    pub fn with_model_from_memory<B>(self, model_bytes: B) -> Result<Session>
     where
         B: AsRef<[u8]>,
     {
         self.with_model_from_memory_monomorphized(model_bytes.as_ref())
     }
 
-    fn with_model_from_memory_monomorphized(self, model_bytes: &[u8]) -> Result<Session<'a>> {
+    fn with_model_from_memory_monomorphized(self, model_bytes: &[u8]) -> Result<Session> {
         let mut session_ptr: *mut sys::OrtSession = std::ptr::null_mut();
 
         let env_ptr: *const sys::OrtEnv = self.env.env_ptr();
@@ -283,7 +283,7 @@ impl<'a> SessionBuilder<'a> {
             .collect::<Result<Vec<Output>>>()?;
 
         Ok(Session {
-            env: self.env,
+            env: self.env.clone(),
             session_ptr,
             allocator_ptr,
             memory_info,
@@ -295,8 +295,9 @@ impl<'a> SessionBuilder<'a> {
 
 /// Type storing the session information, built from an [`Environment`](environment/struct.Environment.html)
 #[derive(Debug)]
-pub struct Session<'a> {
-    env: &'a Environment,
+pub struct Session {
+    #[allow(dead_code)]
+    env: Environment,
     session_ptr: *mut sys::OrtSession,
     allocator_ptr: *mut sys::OrtAllocator,
     memory_info: MemoryInfo,
@@ -354,7 +355,7 @@ impl Output {
     }
 }
 
-impl<'a> Drop for Session<'a> {
+impl Drop for Session {
     #[tracing::instrument]
     fn drop(&mut self) {
         debug!("Dropping the session.");
@@ -370,7 +371,7 @@ impl<'a> Drop for Session<'a> {
     }
 }
 
-impl<'a> Session<'a> {
+impl Session {
     /// Run the input data through the ONNX graph, performing inference.
     ///
     /// Note that ONNX models can have multiple inputs; a `Vec<_>` is thus
@@ -475,7 +476,7 @@ impl<'a> Session<'a> {
         outputs
     }
 
-    // pub fn tensor_from_array<'a, 'b, T, D>(&'a self, array: Array<T, D>) -> Tensor<'b, T, D>
+    // pub fn tensor_from_array<'a, 'b, T, D>(&self, array: Array<T, D>) -> Tensor<'b, T, D>
     // where
     //     'a: 'b, // 'a outlives 'b
     // {
