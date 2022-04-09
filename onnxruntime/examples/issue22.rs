@@ -35,7 +35,7 @@ fn main() {
     let attention_mask = Array2::<i64>::from_shape_vec((1, 3), vec![1, 1, 1]).unwrap();
 
     let outputs: Vec<OrtOwnedTensor<f32, _>> = session
-        .run(vec![input_ids.view(), attention_mask.view()])
+        .run(&[input_ids.view(), attention_mask.view()])
         .unwrap();
     print!("outputs: {:#?}", outputs);
 }

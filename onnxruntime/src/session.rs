@@ -7,7 +7,7 @@ use std::os::unix::ffi::OsStrExt;
 #[cfg(target_family = "windows")]
 use std::os::windows::ffi::OsStrExt;
 
-use ndarray::ArrayView;
+use ndarray::{ArrayBase, Data};
 use tracing::{debug, error};
 
 use onnxruntime_sys as sys;
@@ -363,16 +363,17 @@ impl Session {
     /// used for the input data here.
     pub fn run<'s, 'tin, 'tout, 'm, TIn, TOut, D>(
         &'s self,
-        input_arrays: Vec<ArrayView<'tin, TIn, D>>,
+        input_arrays: &[ArrayBase<TIn, D>],
     ) -> Result<Vec<OrtOwnedTensor<'tout, 'm, TOut, ndarray::IxDyn>>>
     where
-        TIn: TypeToTensorElementDataType + Debug + Clone,
+        TIn: Data,
+        TIn::Elem: TypeToTensorElementDataType + Debug + Clone,
         TOut: TypeToTensorElementDataType + Debug + Clone,
         D: ndarray::Dimension,
         'm: 'tin + 'tout, // 'm outlives 'tin and 'tout (memory info outlives tensor)
         's: 'm,           // 's outlives 'm (session outlives memory info)
     {
-        self.validate_input_shapes(&input_arrays)?;
+        self.validate_input_shapes(input_arrays)?;
 
         // Build arguments to Run()
 
@@ -399,13 +400,14 @@ impl Session {
             vec![std::ptr::null_mut(); self.outputs.len()];
 
         // The C API expects pointers for the arrays (pointers to C-arrays)
-        let input_ort_tensors: Vec<OrtTensor<TIn, D>> = input_arrays
-            .into_iter()
+        let input_ort_tensors: Vec<_> = input_arrays
+            .iter()
+            .map(|input_array| input_array.view())
             .map(|input_array| {
                 OrtTensor::from_array(&self.memory_info, self.allocator_ptr, input_array)
             })
-            .collect::<Result<Vec<OrtTensor<TIn, D>>>>()?;
-        let input_ort_values: Vec<*const sys::OrtValue> = input_ort_tensors
+            .collect::<Result<_>>()?;
+        let input_ort_values: Vec<_> = input_ort_tensors
             .iter()
             .map(|input_array_ort| input_array_ort.c_ptr as *const sys::OrtValue)
             .collect();
@@ -468,9 +470,10 @@ impl Session {
     //     Tensor::from_array(self, array)
     // }
 
-    fn validate_input_shapes<TIn, D>(&self, input_arrays: &[ArrayView<TIn, D>]) -> Result<()>
+    fn validate_input_shapes<TIn, D>(&self, input_arrays: &[ArrayBase<TIn, D>]) -> Result<()>
     where
-        TIn: TypeToTensorElementDataType + Debug + Clone,
+        TIn: Data,
+        TIn::Elem: TypeToTensorElementDataType + Debug + Clone,
         D: ndarray::Dimension,
     {
         // ******************************************************************

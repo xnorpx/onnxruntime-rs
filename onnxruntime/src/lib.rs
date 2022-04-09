@@ -73,7 +73,7 @@
 //! #     .with_model_from_file("squeezenet.onnx")?;
 //! let array = ndarray::Array::linspace(0.0_f32, 1.0, 100);
 //! // Multiple inputs and outputs are possible
-//! let input_tensor = vec![array.view()];
+//! let input_tensor = &[array.view()];
 //! let outputs: Vec<OrtOwnedTensor<f32,_>> = session.run(input_tensor)?;
 //! # Ok(())
 //! # }
