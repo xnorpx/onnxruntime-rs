@@ -284,6 +284,11 @@ pub struct Session {
 
 /// Information about an ONNX's input as stored in loaded file
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde1::Serialize, serde1::Deserialize),
+    serde(crate = "serde1")
+)]
 pub struct Input {
     /// Name of the input layer
     pub name: String,
@@ -297,6 +302,11 @@ pub struct Input {
 
 /// Information about an ONNX's output as stored in loaded file
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde1::Serialize, serde1::Deserialize),
+    serde(crate = "serde1")
+)]
 pub struct Output {
     /// Name of the output layer
     pub name: String,

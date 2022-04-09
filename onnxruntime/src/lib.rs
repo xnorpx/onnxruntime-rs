@@ -261,6 +261,11 @@ mod onnxruntime {
 
 /// Logging level of the ONNX Runtime C API
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde1::Serialize, serde1::Deserialize),
+    serde(crate = "serde1")
+)]
 #[cfg_attr(not(windows), repr(u32))]
 #[cfg_attr(windows, repr(i32))]
 pub enum LoggingLevel {
@@ -293,6 +298,11 @@ impl From<LoggingLevel> for sys::OrtLoggingLevel {
 /// See the [official documentation](https://github.com/microsoft/onnxruntime/blob/master/docs/ONNX_Runtime_Graph_Optimizations.md)
 /// for more information on the different optimization levels.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde1::Serialize, serde1::Deserialize),
+    serde(crate = "serde1")
+)]
 #[cfg_attr(not(windows), repr(u32))]
 #[cfg_attr(windows, repr(i32))]
 pub enum GraphOptimizationLevel {
@@ -322,6 +332,11 @@ impl From<GraphOptimizationLevel> for sys::GraphOptimizationLevel {
 // FIXME: Add tests to cover the commented out types
 /// Enum mapping ONNX Runtime's supported tensor types
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde1::Serialize, serde1::Deserialize),
+    serde(crate = "serde1")
+)]
 #[cfg_attr(not(windows), repr(u32))]
 #[cfg_attr(windows, repr(i32))]
 pub enum TensorElementDataType {
@@ -468,6 +483,11 @@ impl<T: Utf8Data> TypeToTensorElementDataType for T {
 
 /// Allocator type
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde1::Serialize, serde1::Deserialize),
+    serde(crate = "serde1")
+)]
 #[repr(i32)]
 pub enum AllocatorType {
     // Invalid = sys::OrtAllocatorType::Invalid as i32,
@@ -492,6 +512,11 @@ impl From<AllocatorType> for sys::OrtAllocatorType {
 ///
 /// Only support ONNX's default type for now.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde1",
+    derive(serde1::Serialize, serde1::Deserialize),
+    serde(crate = "serde1")
+)]
 #[repr(i32)]
 pub enum MemType {
     // FIXME: C API's `OrtMemType_OrtMemTypeCPU` defines it equal to `OrtMemType_OrtMemTypeCPUOutput`. How to handle this??
