@@ -7,7 +7,6 @@ use std::os::unix::ffi::OsStrExt;
 #[cfg(target_family = "windows")]
 use std::os::windows::ffi::OsStrExt;
 
-use ndarray::{ArrayBase, Data};
 use tracing::{debug, error};
 
 use onnxruntime_sys as sys;
@@ -23,7 +22,7 @@ use crate::{
     memory::MemoryInfo,
     tensor::{
         ort_owned_tensor::{OrtOwnedTensor, OrtOwnedTensorExtractor},
-        OrtTensorDyn, OrtTensorsDyn,
+        IntoOrtTensors, OrtTensorsDyn,
     },
     AllocatorType, GraphOptimizationLevel, MemType, TensorElementDataType,
     TypeToTensorElementDataType,
@@ -274,80 +273,12 @@ pub struct Session {
     #[allow(dead_code)]
     env: Environment,
     session_ptr: *mut sys::OrtSession,
-    allocator_ptr: *mut sys::OrtAllocator,
-    memory_info: MemoryInfo,
+    pub(crate) allocator_ptr: *mut sys::OrtAllocator,
+    pub(crate) memory_info: MemoryInfo,
     /// Information about the ONNX's inputs as stored in loaded file
     pub inputs: Vec<Input>,
     /// Information about the ONNX's outputs as stored in loaded file
     pub outputs: Vec<Output>,
-}
-
-/// Information about an ONNX's inputs as stored in loaded file
-pub trait IntoOrtTensors<'t> {
-    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
-    where
-        'm: 't // 'm outlives 't
-    ;
-}
-
-impl<'t> IntoOrtTensors<'t> for OrtTensorsDyn<'t> {
-    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
-    where
-        'm: 't, // 'm outlives 't
-    {
-        Ok(self)
-    }
-}
-
-impl<'t, T, Item> IntoOrtTensors<'t> for T
-where
-    T: IntoIterator<Item = Item>,
-    Item: AsOrtTensorDyn<'t>,
-{
-    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
-    where
-        'm: 't, // 'm outlives 't
-    {
-        Ok(OrtTensorsDyn {
-            inner: self
-                .into_iter()
-                .map(|tensor| tensor.as_ort_tensor(session))
-                .collect::<Result<_>>()?,
-        })
-    }
-}
-
-pub trait AsOrtTensorDyn<'t> {
-    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
-    where
-        'm: 't // 'm outlives 't
-    ;
-}
-
-impl<'t, T, D> AsOrtTensorDyn<'t> for ArrayBase<T, D>
-where
-    T: Data,
-    T::Elem: TypeToTensorElementDataType + Debug + Clone,
-    D: ndarray::Dimension,
-{
-    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
-    where
-        'm: 't, // 'm outlives 't
-    {
-        OrtTensorDyn::from_array(&session.memory_info, session.allocator_ptr, self)
-    }
-}
-
-impl<'t, T> AsOrtTensorDyn<'t> for &T
-where
-    T: AsOrtTensorDyn<'t>,
-{
-    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
-    where
-        'm: 't, // 'm outlives 't
-    {
-        (**self).as_ort_tensor(session)
-    }
 }
 
 /// Information about an ONNX's input as stored in loaded file
