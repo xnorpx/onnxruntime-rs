@@ -2,15 +2,12 @@
 
 use std::{fmt::Debug, ops::Deref};
 
-use ndarray::{Array, ArrayView};
+use ndarray::ArrayView;
 use tracing::debug;
 
 use onnxruntime_sys as sys;
 
-use crate::{
-    error::status_to_result, g_ort, memory::MemoryInfo, tensor::ndarray_tensor::NdArrayTensor,
-    OrtError, Result, TypeToTensorElementDataType,
-};
+use crate::{error::status_to_result, g_ort, OrtError, Result, TypeToTensorElementDataType};
 
 /// Tensor containing data owned by the ONNX Runtime C library, used to return values from inference.
 ///
@@ -23,19 +20,16 @@ use crate::{
 /// `OrtOwnedTensor` implements the [`std::deref::Deref`](#impl-Deref) trait for ergonomic access to
 /// the underlying [`ndarray::ArrayView`](https://docs.rs/ndarray/latest/ndarray/type.ArrayView.html).
 #[derive(Debug)]
-pub struct OrtOwnedTensor<'t, 'm, T, D>
+pub struct OrtOwnedTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
-    'm: 't, // 'm outlives 't
 {
     pub(crate) tensor_ptr: *mut sys::OrtValue,
     array_view: ArrayView<'t, T, D>,
-    #[allow(dead_code)]
-    memory_info: &'m MemoryInfo,
 }
 
-impl<'t, 'm, T, D> Deref for OrtOwnedTensor<'t, 'm, T, D>
+impl<'t, T, D> Deref for OrtOwnedTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
@@ -47,44 +41,27 @@ where
     }
 }
 
-impl<'t, 'm, T, D> OrtOwnedTensor<'t, 'm, T, D>
-where
-    T: TypeToTensorElementDataType + Debug + Clone,
-    D: ndarray::Dimension,
-{
-    /// Apply a softmax on the specified axis
-    pub fn softmax(&self, axis: ndarray::Axis) -> Array<T, D>
-    where
-        D: ndarray::RemoveAxis,
-        T: ndarray::NdFloat + std::ops::SubAssign + std::ops::DivAssign,
-    {
-        self.array_view.softmax(axis)
-    }
-}
-
 #[derive(Debug)]
-pub(crate) struct OrtOwnedTensorExtractor<'m, D>
+pub(crate) struct OrtOwnedTensorExtractor<D>
 where
     D: ndarray::Dimension,
 {
     pub(crate) tensor_ptr: *mut sys::OrtValue,
-    memory_info: &'m MemoryInfo,
     shape: D,
 }
 
-impl<'m, D> OrtOwnedTensorExtractor<'m, D>
+impl<D> OrtOwnedTensorExtractor<D>
 where
     D: ndarray::Dimension,
 {
-    pub(crate) fn new(memory_info: &'m MemoryInfo, shape: D) -> OrtOwnedTensorExtractor<'m, D> {
+    pub(crate) fn new(shape: D) -> OrtOwnedTensorExtractor<D> {
         OrtOwnedTensorExtractor {
             tensor_ptr: std::ptr::null_mut(),
-            memory_info,
             shape,
         }
     }
 
-    pub(crate) fn extract<'t, T>(self) -> Result<OrtOwnedTensor<'t, 'm, T, D>>
+    pub(crate) fn extract<'t, T>(self) -> Result<OrtOwnedTensor<'t, T, D>>
     where
         T: TypeToTensorElementDataType + Debug + Clone,
     {
@@ -116,16 +93,14 @@ where
         Ok(OrtOwnedTensor {
             tensor_ptr: self.tensor_ptr,
             array_view,
-            memory_info: self.memory_info,
         })
     }
 }
 
-impl<'t, 'm, T, D> Drop for OrtOwnedTensor<'t, 'm, T, D>
+impl<'t, T, D> Drop for OrtOwnedTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
-    'm: 't, // 'm outlives 't
 {
     #[tracing::instrument]
     fn drop(&mut self) {

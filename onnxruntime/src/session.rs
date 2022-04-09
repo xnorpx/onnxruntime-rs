@@ -361,17 +361,16 @@ impl Session {
     ///
     /// Note that ONNX models can have multiple inputs; a `Vec<_>` is thus
     /// used for the input data here.
-    pub fn run<'s, 'tin, 'tout, 'm, TIn, TOut, D>(
+    pub fn run<'s, 'tin, 'tout, TIn, TOut, D>(
         &'s self,
         input_arrays: &[ArrayBase<TIn, D>],
-    ) -> Result<Vec<OrtOwnedTensor<'tout, 'm, TOut, ndarray::IxDyn>>>
+    ) -> Result<Vec<OrtOwnedTensor<'tout, TOut, ndarray::IxDyn>>>
     where
         TIn: Data,
         TIn::Elem: TypeToTensorElementDataType + Debug + Clone,
         TOut: TypeToTensorElementDataType + Debug + Clone,
         D: ndarray::Dimension,
-        'm: 'tin + 'tout, // 'm outlives 'tin and 'tout (memory info outlives tensor)
-        's: 'm,           // 's outlives 'm (session outlives memory info)
+        's: 'tin + 'tout, // 's outlives 'tin and 'tout (session outlives tensor)
     {
         self.validate_input_shapes(input_arrays)?;
 
@@ -428,7 +427,6 @@ impl Session {
         };
         status_to_result(status).map_err(OrtError::Run)?;
 
-        let memory_info_ref = &self.memory_info;
         let outputs: Result<Vec<OrtOwnedTensor<TOut, ndarray::Dim<ndarray::IxDynImpl>>>> =
             output_tensor_extractors_ptrs
                 .into_iter()
@@ -444,7 +442,7 @@ impl Session {
                     let dims: Vec<_> = dims?.iter().map(|&n| n as usize).collect();
 
                     let mut output_tensor_extractor =
-                        OrtOwnedTensorExtractor::new(memory_info_ref, ndarray::IxDyn(&dims));
+                        OrtOwnedTensorExtractor::new(ndarray::IxDyn(&dims));
                     output_tensor_extractor.tensor_ptr = ptr;
                     output_tensor_extractor.extract::<TOut>()
                 })
@@ -462,13 +460,6 @@ impl Session {
 
         outputs
     }
-
-    // pub fn tensor_from_array<'a, 'b, T, D>(&self, array: Array<T, D>) -> Tensor<'b, T, D>
-    // where
-    //     'a: 'b, // 'a outlives 'b
-    // {
-    //     Tensor::from_array(self, array)
-    // }
 
     fn validate_input_shapes<TIn, D>(&self, input_arrays: &[ArrayBase<TIn, D>]) -> Result<()>
     where

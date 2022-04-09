@@ -2,7 +2,7 @@
 
 use std::{ffi, fmt::Debug, ops::Deref};
 
-use ndarray::{Array, ArrayView};
+use ndarray::ArrayView;
 use tracing::{debug, error};
 
 use onnxruntime_sys as sys;
@@ -11,7 +11,6 @@ use crate::{
     error::{assert_not_null_pointer, call_ort, status_to_result},
     g_ort,
     memory::MemoryInfo,
-    tensor::ndarray_tensor::NdArrayTensor,
     OrtError, Result, TensorElementDataType, TypeToTensorElementDataType,
 };
 
@@ -23,28 +22,28 @@ use crate::{
 /// **NOTE**: The type is not meant to be used directly, use an [`ndarray::Array`](https://docs.rs/ndarray/latest/ndarray/type.Array.html)
 /// instead.
 #[derive(Debug)]
-pub struct OrtTensor<'t, 'm, T, D>
+pub struct OrtTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
-    'm: 't, // 'm outlives 't
 {
     pub(crate) c_ptr: *mut sys::OrtValue,
     array: ArrayView<'t, T, D>,
-    #[allow(dead_code)]
-    memory_info: &'m MemoryInfo,
 }
 
-impl<'t, 'm, T, D> OrtTensor<'t, 'm, T, D>
+impl<'t, T, D> OrtTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
 {
-    pub(crate) fn from_array(
+    pub(crate) fn from_array<'m>(
         memory_info: &'m MemoryInfo,
         allocator_ptr: *mut sys::OrtAllocator,
         array: ArrayView<'t, T, D>,
-    ) -> Result<OrtTensor<'t, 'm, T, D>> {
+    ) -> Result<OrtTensor<'t, T, D>>
+    where
+        'm: 't, // 'm outlives 't
+    {
         // where onnxruntime will write the tensor data to
         let mut tensor_ptr: *mut sys::OrtValue = std::ptr::null_mut();
         let tensor_ptr_ptr: *mut *mut sys::OrtValue = &mut tensor_ptr;
@@ -142,12 +141,11 @@ where
         Ok(OrtTensor {
             c_ptr: tensor_ptr,
             array,
-            memory_info,
         })
     }
 }
 
-impl<'t, 'm, T, D> Deref for OrtTensor<'t, 'm, T, D>
+impl<'t, T, D> Deref for OrtTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
@@ -159,11 +157,10 @@ where
     }
 }
 
-impl<'t, 'm, T, D> Drop for OrtTensor<'t, 'm, T, D>
+impl<'t, T, D> Drop for OrtTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
-    'm: 't, // 'm outlives 't
 {
     #[tracing::instrument]
     fn drop(&mut self) {
@@ -176,21 +173,6 @@ where
         }
 
         self.c_ptr = std::ptr::null_mut();
-    }
-}
-
-impl<'t, 'm, T, D> OrtTensor<'t, 'm, T, D>
-where
-    T: TypeToTensorElementDataType + Debug + Clone,
-    D: ndarray::Dimension,
-{
-    /// Apply a softmax on the specified axis
-    pub fn softmax(&self, axis: ndarray::Axis) -> Array<T, D>
-    where
-        D: ndarray::RemoveAxis,
-        T: ndarray::NdFloat + std::ops::SubAssign + std::ops::DivAssign,
-    {
-        self.array.softmax(axis)
     }
 }
 
