@@ -50,7 +50,7 @@ use crate::{
 ///     .with_name("test")
 ///     .with_log_level(LoggingLevel::Verbose)
 ///     .build()?;
-/// let mut session = environment
+/// let session = environment
 ///     .new_session_builder()?
 ///     .with_optimization_level(GraphOptimizationLevel::Basic)?
 ///     .with_number_threads(1)?
@@ -80,7 +80,7 @@ impl Drop for SessionBuilder {
 }
 
 impl SessionBuilder {
-    pub(crate) fn new(env: &Environment) -> Result<SessionBuilder> {
+    pub(crate) fn new(env: &Environment) -> Result<Self> {
         let mut session_options_ptr: *mut sys::OrtSessionOptions = std::ptr::null_mut();
         let status = unsafe { g_ort().CreateSessionOptions.unwrap()(&mut session_options_ptr) };
 
@@ -97,7 +97,7 @@ impl SessionBuilder {
     }
 
     /// Configure the session to use a number of threads
-    pub fn with_number_threads(self, num_threads: i16) -> Result<SessionBuilder> {
+    pub fn with_number_threads(self, num_threads: i16) -> Result<Self> {
         // FIXME: Pre-built binaries use OpenMP, set env variable instead
 
         // We use a u16 in the builder to cover the 16-bits positive values of a i32.
@@ -110,10 +110,7 @@ impl SessionBuilder {
     }
 
     /// Set the session's optimization level
-    pub fn with_optimization_level(
-        self,
-        opt_level: GraphOptimizationLevel,
-    ) -> Result<SessionBuilder> {
+    pub fn with_optimization_level(self, opt_level: GraphOptimizationLevel) -> Result<Self> {
         // Sets graph optimization level
         unsafe {
             g_ort().SetSessionGraphOptimizationLevel.unwrap()(
@@ -127,7 +124,7 @@ impl SessionBuilder {
     /// Set the session's allocator
     ///
     /// Defaults to [`AllocatorType::Arena`](../enum.AllocatorType.html#variant.Arena)
-    pub fn with_allocator(mut self, allocator: AllocatorType) -> Result<SessionBuilder> {
+    pub fn with_allocator(mut self, allocator: AllocatorType) -> Result<Self> {
         self.allocator = allocator;
         Ok(self)
     }
@@ -135,7 +132,7 @@ impl SessionBuilder {
     /// Set the session's memory type
     ///
     /// Defaults to [`MemType::Default`](../enum.MemType.html#variant.Default)
-    pub fn with_memory_type(mut self, memory_type: MemType) -> Result<SessionBuilder> {
+    pub fn with_memory_type(mut self, memory_type: MemType) -> Result<Self> {
         self.memory_type = memory_type;
         Ok(self)
     }
@@ -355,7 +352,7 @@ impl Session {
     /// Note that ONNX models can have multiple inputs; a `Vec<_>` is thus
     /// used for the input data here.
     pub fn run<'s, 't, 'm, TIn, TOut, D>(
-        &'s mut self,
+        &'s self,
         input_arrays: Vec<Array<TIn, D>>,
     ) -> Result<Vec<OrtOwnedTensor<'t, 'm, TOut, ndarray::IxDyn>>>
     where
@@ -461,7 +458,7 @@ impl Session {
     //     Tensor::from_array(self, array)
     // }
 
-    fn validate_input_shapes<TIn, D>(&mut self, input_arrays: &[Array<TIn, D>]) -> Result<()>
+    fn validate_input_shapes<TIn, D>(&self, input_arrays: &[Array<TIn, D>]) -> Result<()>
     where
         TIn: TypeToTensorElementDataType + Debug + Clone,
         D: ndarray::Dimension,
