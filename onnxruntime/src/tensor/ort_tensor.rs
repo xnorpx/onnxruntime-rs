@@ -44,102 +44,12 @@ where
     where
         'm: 't, // 'm outlives 't
     {
-        // where onnxruntime will write the tensor data to
-        let mut tensor_ptr: *mut sys::OrtValue = std::ptr::null_mut();
-        let tensor_ptr_ptr: *mut *mut sys::OrtValue = &mut tensor_ptr;
-
-        let shape: Vec<i64> = array.shape().iter().map(|d: &usize| *d as i64).collect();
-        let shape_ptr: *const i64 = shape.as_ptr();
-        let shape_len = array.shape().len();
-
-        match T::tensor_element_data_type() {
-            TensorElementDataType::Float
-            | TensorElementDataType::Uint8
-            | TensorElementDataType::Int8
-            | TensorElementDataType::Uint16
-            | TensorElementDataType::Int16
-            | TensorElementDataType::Int32
-            | TensorElementDataType::Int64
-            | TensorElementDataType::Double
-            | TensorElementDataType::Uint32
-            | TensorElementDataType::Uint64 => {
-                // Primitive data is already suitably laid out in memory; provide it to
-                // onnxruntime as is
-                //
-                // note: ReleaseValue won't release `tensor_values_ptr`.
-                let tensor_values_ptr: *mut std::ffi::c_void =
-                    array.as_ptr() as *mut std::ffi::c_void;
-                assert_not_null_pointer(tensor_values_ptr, "TensorValues")?;
-
-                unsafe {
-                    call_ort(|ort| {
-                        ort.CreateTensorWithDataAsOrtValue.unwrap()(
-                            memory_info.ptr,
-                            tensor_values_ptr,
-                            array.len() * std::mem::size_of::<T>(),
-                            shape_ptr,
-                            shape_len,
-                            T::tensor_element_data_type().into(),
-                            tensor_ptr_ptr,
-                        )
-                    })
-                }
-                .map_err(OrtError::CreateTensorWithData)?;
-                assert_not_null_pointer(tensor_ptr, "Tensor")?;
-
-                let mut is_tensor = 0;
-                let status = unsafe { g_ort().IsTensor.unwrap()(tensor_ptr, &mut is_tensor) };
-                status_to_result(status).map_err(OrtError::IsTensor)?;
-            }
-            TensorElementDataType::String => {
-                // create tensor without data -- data is filled in later
-                unsafe {
-                    call_ort(|ort| {
-                        ort.CreateTensorAsOrtValue.unwrap()(
-                            allocator_ptr,
-                            shape_ptr,
-                            shape_len,
-                            T::tensor_element_data_type().into(),
-                            tensor_ptr_ptr,
-                        )
-                    })
-                }
-                .map_err(OrtError::CreateTensor)?;
-
-                // create null-terminated copies of each string, as per `FillStringTensor` docs
-                let null_terminated_copies: Vec<ffi::CString> = array
-                    .iter()
-                    .map(|elt| {
-                        let slice = elt
-                            .try_utf8_bytes()
-                            .expect("String data type must provide utf8 bytes");
-                        ffi::CString::new(slice)
-                    })
-                    .collect::<std::result::Result<Vec<_>, _>>()
-                    .map_err(OrtError::CStringNulError)?;
-
-                let string_pointers = null_terminated_copies
-                    .iter()
-                    .map(|cstring| cstring.as_ptr())
-                    .collect::<Vec<_>>();
-
-                unsafe {
-                    call_ort(|ort| {
-                        ort.FillStringTensor.unwrap()(
-                            tensor_ptr,
-                            string_pointers.as_ptr(),
-                            string_pointers.len(),
-                        )
-                    })
-                }
-                .map_err(OrtError::FillStringTensor)?;
-            }
-        }
-
-        assert_not_null_pointer(tensor_ptr, "Tensor")?;
-
         Ok(OrtTensor {
-            c_ptr: tensor_ptr,
+            c_ptr: super::ort_tensor_dyn::OrtTensorDyn::from_array_get_ptr(
+                memory_info,
+                allocator_ptr,
+                &array,
+            )?,
             array,
         })
     }
@@ -179,7 +89,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{AllocatorType, MemType};
+    use crate::{error::call_ort, AllocatorType, MemType};
     use ndarray::{arr0, arr1, arr2, arr3};
     use std::ptr;
     use test_log::test;

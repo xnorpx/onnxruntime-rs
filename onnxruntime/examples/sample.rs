@@ -58,7 +58,7 @@ fn run() -> Result<(), Error> {
     let array = Array::linspace(0.0_f32, 1.0, n as usize)
         .into_shape(input0_shape)
         .unwrap();
-    let input_tensor_values = &[array.view()];
+    let input_tensor_values = &[array];
 
     let outputs: Vec<OrtOwnedTensor<f32, _>> = session.run(input_tensor_values)?;
 

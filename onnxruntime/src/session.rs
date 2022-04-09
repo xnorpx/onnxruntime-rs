@@ -23,7 +23,7 @@ use crate::{
     memory::MemoryInfo,
     tensor::{
         ort_owned_tensor::{OrtOwnedTensor, OrtOwnedTensorExtractor},
-        OrtTensor,
+        OrtTensorDyn, OrtTensorsDyn,
     },
     AllocatorType, GraphOptimizationLevel, MemType, TensorElementDataType,
     TypeToTensorElementDataType,
@@ -282,6 +282,74 @@ pub struct Session {
     pub outputs: Vec<Output>,
 }
 
+/// Information about an ONNX's inputs as stored in loaded file
+pub trait IntoOrtTensors<'t> {
+    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
+    where
+        'm: 't // 'm outlives 't
+    ;
+}
+
+impl<'t> IntoOrtTensors<'t> for OrtTensorsDyn<'t> {
+    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
+    where
+        'm: 't, // 'm outlives 't
+    {
+        Ok(self)
+    }
+}
+
+impl<'t, T, Item> IntoOrtTensors<'t> for T
+where
+    T: IntoIterator<Item = Item>,
+    Item: AsOrtTensorDyn<'t>,
+{
+    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
+    where
+        'm: 't, // 'm outlives 't
+    {
+        Ok(OrtTensorsDyn {
+            inner: self
+                .into_iter()
+                .map(|tensor| tensor.as_ort_tensor(session))
+                .collect::<Result<_>>()?,
+        })
+    }
+}
+
+pub trait AsOrtTensorDyn<'t> {
+    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
+    where
+        'm: 't // 'm outlives 't
+    ;
+}
+
+impl<'t, T, D> AsOrtTensorDyn<'t> for ArrayBase<T, D>
+where
+    T: Data,
+    T::Elem: TypeToTensorElementDataType + Debug + Clone,
+    D: ndarray::Dimension,
+{
+    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
+    where
+        'm: 't, // 'm outlives 't
+    {
+        OrtTensorDyn::from_array(&session.memory_info, session.allocator_ptr, self)
+    }
+}
+
+impl<'t, T> AsOrtTensorDyn<'t> for &T
+where
+    T: AsOrtTensorDyn<'t>,
+{
+    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
+    where
+        'm: 't, // 'm outlives 't
+    {
+        (**self).as_ort_tensor(session)
+    }
+}
+
 /// Information about an ONNX's input as stored in loaded file
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(
@@ -361,18 +429,18 @@ impl Session {
     ///
     /// Note that ONNX models can have multiple inputs; a `Vec<_>` is thus
     /// used for the input data here.
-    pub fn run<'s, 'tin, 'tout, TIn, TOut, D>(
+    pub fn run<'s, 'tin, 'tout, TIn, TOut>(
         &'s self,
-        input_arrays: &[ArrayBase<TIn, D>],
+        inputs: TIn,
     ) -> Result<Vec<OrtOwnedTensor<'tout, TOut, ndarray::IxDyn>>>
     where
-        TIn: Data,
-        TIn::Elem: TypeToTensorElementDataType + Debug + Clone,
+        TIn: IntoOrtTensors<'tin>,
         TOut: TypeToTensorElementDataType + Debug + Clone,
-        D: ndarray::Dimension,
         's: 'tin + 'tout, // 's outlives 'tin and 'tout (session outlives tensor)
     {
-        self.validate_input_shapes(input_arrays)?;
+        let input_ort_tensors = inputs.into_ort_tensors(self)?;
+
+        self.validate_input_shapes(&input_ort_tensors)?;
 
         // Build arguments to Run()
 
@@ -399,14 +467,8 @@ impl Session {
             vec![std::ptr::null_mut(); self.outputs.len()];
 
         // The C API expects pointers for the arrays (pointers to C-arrays)
-        let input_ort_tensors: Vec<_> = input_arrays
-            .iter()
-            .map(|input_array| input_array.view())
-            .map(|input_array| {
-                OrtTensor::from_array(&self.memory_info, self.allocator_ptr, input_array)
-            })
-            .collect::<Result<_>>()?;
         let input_ort_values: Vec<_> = input_ort_tensors
+            .inner
             .iter()
             .map(|input_array_ort| input_array_ort.c_ptr as *const sys::OrtValue)
             .collect();
@@ -461,31 +523,26 @@ impl Session {
         outputs
     }
 
-    fn validate_input_shapes<TIn, D>(&self, input_arrays: &[ArrayBase<TIn, D>]) -> Result<()>
-    where
-        TIn: Data,
-        TIn::Elem: TypeToTensorElementDataType + Debug + Clone,
-        D: ndarray::Dimension,
-    {
+    fn validate_input_shapes(&self, inputs: &OrtTensorsDyn) -> Result<()> {
         // ******************************************************************
         // FIXME: Properly handle errors here
         // Make sure all dimensions match (except dynamic ones)
 
+        let inputs = &inputs.inner;
+        let inference_input = inputs.iter().map(|input| input.shape.to_vec()).collect();
+
         // Verify length of inputs
-        if input_arrays.len() != self.inputs.len() {
+        if inputs.len() != self.inputs.len() {
             error!(
                 "Non-matching number of inputs: {} (inference) vs {} (model)",
-                input_arrays.len(),
+                inputs.len(),
                 self.inputs.len()
             );
             return Err(OrtError::NonMatchingDimensions(
                 NonMatchingDimensionsError::InputsCount {
                     inference_input_count: 0,
                     model_input_count: 0,
-                    inference_input: input_arrays
-                        .iter()
-                        .map(|input_array| input_array.shape().to_vec())
-                        .collect(),
+                    inference_input,
                     model_input: self
                         .inputs
                         .iter()
@@ -496,21 +553,15 @@ impl Session {
         }
 
         // Verify length of each individual inputs
-        let inputs_different_length = input_arrays
+        let inputs_different_length = inference_input
             .iter()
             .zip(self.inputs.iter())
-            .any(|(l, r)| l.shape().len() != r.dimensions.len());
+            .any(|(l, r)| l.len() != r.dimensions.len());
         if inputs_different_length {
-            error!(
-                "Different input lengths: {:?} vs {:?}",
-                self.inputs, input_arrays
-            );
+            error!("Different input lengths: {:?} vs {:?}", self.inputs, inputs);
             return Err(OrtError::NonMatchingDimensions(
                 NonMatchingDimensionsError::InputsLength {
-                    inference_input: input_arrays
-                        .iter()
-                        .map(|input_array| input_array.shape().to_vec())
-                        .collect(),
+                    inference_input,
                     model_input: self
                         .inputs
                         .iter()
@@ -521,25 +572,22 @@ impl Session {
         }
 
         // Verify shape of each individual inputs
-        let inputs_different_shape = input_arrays.iter().zip(self.inputs.iter()).any(|(l, r)| {
-            let l_shape = l.shape();
-            let r_shape = r.dimensions.as_slice();
-            l_shape.iter().zip(r_shape.iter()).any(|(l2, r2)| match r2 {
-                Some(r3) => *r3 as usize != *l2,
-                None => false, // None means dynamic size; in that case shape always match
-            })
-        });
+        let inputs_different_shape =
+            inference_input
+                .iter()
+                .zip(self.inputs.iter())
+                .any(|(l_shape, r)| {
+                    let r_shape = r.dimensions.as_slice();
+                    l_shape.iter().zip(r_shape.iter()).any(|(l2, r2)| match r2 {
+                        Some(r3) => *r3 as usize != *l2,
+                        None => false, // None means dynamic size; in that case shape always match
+                    })
+                });
         if inputs_different_shape {
-            error!(
-                "Different input lengths: {:?} vs {:?}",
-                self.inputs, input_arrays
-            );
+            error!("Different input lengths: {:?} vs {:?}", self.inputs, inputs);
             return Err(OrtError::NonMatchingDimensions(
                 NonMatchingDimensionsError::InputsLength {
-                    inference_input: input_arrays
-                        .iter()
-                        .map(|input_array| input_array.shape().to_vec())
-                        .collect(),
+                    inference_input,
                     model_input: self
                         .inputs
                         .iter()
