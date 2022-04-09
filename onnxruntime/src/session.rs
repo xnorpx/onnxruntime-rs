@@ -22,7 +22,7 @@ use crate::{
     memory::MemoryInfo,
     tensor::{
         ort_owned_tensor::{OrtOwnedTensor, OrtOwnedTensorExtractor},
-        IntoOrtTensors, OrtTensorsDyn,
+        IntoOrtTensorsDyn, OrtTensorsDyn,
     },
     AllocatorType, GraphOptimizationLevel, MemType, TensorElementDataType,
     TypeToTensorElementDataType,
@@ -365,11 +365,11 @@ impl Session {
         inputs: TIn,
     ) -> Result<Vec<OrtOwnedTensor<'tout, TOut, ndarray::IxDyn>>>
     where
-        TIn: IntoOrtTensors<'tin>,
+        TIn: IntoOrtTensorsDyn<'tin>,
         TOut: TypeToTensorElementDataType + Debug + Clone,
         's: 'tin + 'tout, // 's outlives 'tin and 'tout (session outlives tensor)
     {
-        let input_ort_tensors = inputs.into_ort_tensors(self)?;
+        let input_ort_tensors = inputs.into_ort_tensors_dyn(self)?;
 
         self.validate_input_shapes(&input_ort_tensors)?;
 

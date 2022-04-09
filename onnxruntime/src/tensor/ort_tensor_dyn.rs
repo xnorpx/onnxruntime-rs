@@ -11,6 +11,7 @@ use crate::{
     error::{assert_not_null_pointer, call_ort, status_to_result},
     g_ort,
     memory::MemoryInfo,
+    session::Session,
     OrtError, Result, TensorElementDataType, TypeToTensorElementDataType,
 };
 
@@ -18,6 +19,18 @@ use crate::{
 #[derive(Debug, Default)]
 pub struct OrtTensorsDyn<'t> {
     pub(crate) inner: Vec<OrtTensorDyn<'t>>,
+}
+
+impl<'t> OrtTensorsDyn<'t> {
+    /// Appends an element to the back of a collection.
+    pub fn push<'m, T>(&mut self, tensor: &T, session: &'m Session) -> Result<()>
+    where
+        'm: 't, // 'm outlives 't
+        T: super::AsOrtTensorDyn<'t>,
+    {
+        self.inner.push(tensor.as_ort_tensor_dyn(session)?);
+        Ok(())
+    }
 }
 
 /// Owned tensor, backed by an [`ndarray::Array`](https://docs.rs/ndarray/latest/ndarray/type.Array.html)

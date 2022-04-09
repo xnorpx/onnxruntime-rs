@@ -39,16 +39,16 @@ pub use self::{
 };
 
 /// A list of different kinds of tensor references.
-pub trait IntoOrtTensors<'t> {
+pub trait IntoOrtTensorsDyn<'t> {
     /// Convert the list of tensors into `OrtTensorsDyn`.
-    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
+    fn into_ort_tensors_dyn<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
     where
         'm: 't // 'm outlives 't
     ;
 }
 
-impl<'t> IntoOrtTensors<'t> for OrtTensorsDyn<'t> {
-    fn into_ort_tensors<'m>(self, _: &'m Session) -> Result<OrtTensorsDyn<'t>>
+impl<'t> IntoOrtTensorsDyn<'t> for OrtTensorsDyn<'t> {
+    fn into_ort_tensors_dyn<'m>(self, _: &'m Session) -> Result<OrtTensorsDyn<'t>>
     where
         'm: 't, // 'm outlives 't
     {
@@ -56,19 +56,19 @@ impl<'t> IntoOrtTensors<'t> for OrtTensorsDyn<'t> {
     }
 }
 
-impl<'t, T, Item> IntoOrtTensors<'t> for T
+impl<'t, T, Item> IntoOrtTensorsDyn<'t> for T
 where
     T: IntoIterator<Item = Item>,
     Item: AsOrtTensorDyn<'t>,
 {
-    fn into_ort_tensors<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
+    fn into_ort_tensors_dyn<'m>(self, session: &'m Session) -> Result<OrtTensorsDyn<'t>>
     where
         'm: 't, // 'm outlives 't
     {
         Ok(OrtTensorsDyn {
             inner: self
                 .into_iter()
-                .map(|tensor| tensor.as_ort_tensor(session))
+                .map(|tensor| tensor.as_ort_tensor_dyn(session))
                 .collect::<Result<_>>()?,
         })
     }
@@ -77,7 +77,7 @@ where
 /// A tensor reference.
 pub trait AsOrtTensorDyn<'t> {
     /// Convert the tensors into `OrtTensorDyn`.
-    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
+    fn as_ort_tensor_dyn<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
     where
         'm: 't // 'm outlives 't
     ;
@@ -89,7 +89,7 @@ where
     T::Elem: TypeToTensorElementDataType + Debug + Clone,
     D: ndarray::Dimension,
 {
-    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
+    fn as_ort_tensor_dyn<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
     where
         'm: 't, // 'm outlives 't
     {
@@ -101,10 +101,10 @@ impl<'t, T> AsOrtTensorDyn<'t> for &T
 where
     T: AsOrtTensorDyn<'t>,
 {
-    fn as_ort_tensor<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
+    fn as_ort_tensor_dyn<'m>(&self, session: &'m Session) -> Result<OrtTensorDyn<'t>>
     where
         'm: 't, // 'm outlives 't
     {
-        (**self).as_ort_tensor(session)
+        (**self).as_ort_tensor_dyn(session)
     }
 }
