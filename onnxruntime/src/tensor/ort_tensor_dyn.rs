@@ -71,7 +71,6 @@ impl<'t> OrtTensorDyn<'t> {
         let shape: Vec<i64> = array.shape().iter().map(|d: &usize| *d as i64).collect();
         let shape_ptr: *const i64 = shape.as_ptr();
         let shape_len = shape.len();
-        dbg!(&shape);
 
         match T::Elem::tensor_element_data_type() {
             TensorElementDataType::I8
