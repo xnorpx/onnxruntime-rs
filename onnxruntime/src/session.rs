@@ -7,7 +7,7 @@ use std::os::unix::ffi::OsStrExt;
 #[cfg(target_family = "windows")]
 use std::os::windows::ffi::OsStrExt;
 
-use ndarray::Array;
+use ndarray::ArrayView;
 use tracing::{debug, error};
 
 use onnxruntime_sys as sys;
@@ -361,16 +361,16 @@ impl Session {
     ///
     /// Note that ONNX models can have multiple inputs; a `Vec<_>` is thus
     /// used for the input data here.
-    pub fn run<'s, 't, 'm, TIn, TOut, D>(
+    pub fn run<'s, 'tin, 'tout, 'm, TIn, TOut, D>(
         &'s self,
-        input_arrays: Vec<Array<TIn, D>>,
-    ) -> Result<Vec<OrtOwnedTensor<'t, 'm, TOut, ndarray::IxDyn>>>
+        input_arrays: Vec<ArrayView<'tin, TIn, D>>,
+    ) -> Result<Vec<OrtOwnedTensor<'tout, 'm, TOut, ndarray::IxDyn>>>
     where
         TIn: TypeToTensorElementDataType + Debug + Clone,
         TOut: TypeToTensorElementDataType + Debug + Clone,
         D: ndarray::Dimension,
-        'm: 't, // 'm outlives 't (memory info outlives tensor)
-        's: 'm, // 's outlives 'm (session outlives memory info)
+        'm: 'tin + 'tout, // 'm outlives 'tin and 'tout (memory info outlives tensor)
+        's: 'm,           // 's outlives 'm (session outlives memory info)
     {
         self.validate_input_shapes(&input_arrays)?;
 
@@ -468,7 +468,7 @@ impl Session {
     //     Tensor::from_array(self, array)
     // }
 
-    fn validate_input_shapes<TIn, D>(&self, input_arrays: &[Array<TIn, D>]) -> Result<()>
+    fn validate_input_shapes<TIn, D>(&self, input_arrays: &[ArrayView<TIn, D>]) -> Result<()>
     where
         TIn: TypeToTensorElementDataType + Debug + Clone,
         D: ndarray::Dimension,
