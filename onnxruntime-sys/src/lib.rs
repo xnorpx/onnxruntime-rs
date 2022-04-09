@@ -14,3 +14,8 @@ include!(concat!(
 pub type OnnxEnumInt = i32;
 #[cfg(not(target_os = "windows"))]
 pub type OnnxEnumInt = u32;
+
+#[cfg(target_os = "windows")]
+pub const ORT_API_VERSION_MULTI_PLATFORM: u32 = 7;
+#[cfg(not(target_os = "windows"))]
+pub const ORT_API_VERSION_MULTI_PLATFORM: u32 = ORT_API_VERSION;
