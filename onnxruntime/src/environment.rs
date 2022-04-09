@@ -57,7 +57,7 @@ struct EnvironmentSingleton {
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub struct Environment {
     env: Arc<Mutex<EnvironmentSingleton>>,
 }

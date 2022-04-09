@@ -286,7 +286,7 @@ pub struct Session<'a> {
 }
 
 /// Information about an ONNX's input as stored in loaded file
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Input {
     /// Name of the input layer
     pub name: String,
@@ -299,7 +299,7 @@ pub struct Input {
 }
 
 /// Information about an ONNX's output as stored in loaded file
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Output {
     /// Name of the output layer
     pub name: String,

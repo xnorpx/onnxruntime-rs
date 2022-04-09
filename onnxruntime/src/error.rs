@@ -13,7 +13,7 @@ pub type Result<T> = std::result::Result<T, OrtError>;
 
 /// Error type centralizing all possible errors
 #[non_exhaustive]
-#[derive(Error, Debug)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum OrtError {
     /// The C API can message to the caller using a C `char *` which needs to be converted
     /// to Rust's `String`. This operation can fail.
@@ -116,7 +116,7 @@ pub enum OrtError {
 /// Error used when dimensions of input (from model and from inference call)
 /// do not match (as they should).
 #[non_exhaustive]
-#[derive(Error, Debug)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum NonMatchingDimensionsError {
     /// Number of inputs from model does not match number of inputs from inference call
     #[error("Non-matching number of inputs: {inference_input_count:?} for input vs {model_input_count:?} for model (inputs: {inference_input:?}, model: {model_input:?})")]
@@ -142,7 +142,7 @@ pub enum NonMatchingDimensionsError {
 
 /// Error details when ONNX C API fail
 #[non_exhaustive]
-#[derive(Error, Debug)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum OrtApiError {
     /// Details as reported by the ONNX C API in case of error
     #[error("Error calling ONNX Runtime C function: {0}")]
