@@ -25,9 +25,7 @@
 
 pub mod ndarray_tensor;
 pub mod ort_owned_tensor;
-pub mod ort_tensor;
 pub mod ort_tensor_dyn;
 
 pub use ort_owned_tensor::OrtOwnedTensor;
-pub use ort_tensor::OrtTensor;
 pub use ort_tensor_dyn::{OrtTensorDyn, OrtTensorsDyn};
