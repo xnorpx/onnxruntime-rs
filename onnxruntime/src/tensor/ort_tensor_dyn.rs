@@ -22,6 +22,7 @@ pub struct OrtTensorsDyn<'t> {
 }
 
 unsafe impl<'t> Send for OrtTensorsDyn<'t> {}
+unsafe impl<'t> Sync for OrtTensorsDyn<'t> {}
 
 impl<'t> OrtTensorsDyn<'t> {
     /// Appends an element to the back of a collection.
