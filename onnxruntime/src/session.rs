@@ -268,6 +268,12 @@ impl SessionBuilder {
 }
 
 /// Type storing the session information, built from an [`Environment`](environment/struct.Environment.html)
+///
+/// ## Thread-safe
+/// It's safe to invoke Run() on the same session object in multiple threads.
+/// No need for any external synchronization.
+///
+/// * Source: https://github.com/microsoft/onnxruntime/issues/114#issuecomment-444725508
 #[derive(Debug)]
 pub struct Session {
     #[allow(dead_code)]
@@ -280,6 +286,9 @@ pub struct Session {
     /// Information about the ONNX's outputs as stored in loaded file
     pub outputs: Vec<Output>,
 }
+
+unsafe impl Send for Session {}
+unsafe impl Sync for Session {}
 
 /// Information about an ONNX's input as stored in loaded file
 #[derive(Clone, Debug, PartialEq, Eq)]
