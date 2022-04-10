@@ -21,6 +21,8 @@ pub struct OrtTensorsDyn<'t> {
     pub(crate) inner: Vec<OrtTensorDyn<'t>>,
 }
 
+unsafe impl<'t> Send for OrtTensorsDyn<'t> {}
+
 impl<'t> OrtTensorsDyn<'t> {
     /// Appends an element to the back of a collection.
     pub fn push<'m, T>(&mut self, tensor: &T, session: &'m Session) -> Result<()>

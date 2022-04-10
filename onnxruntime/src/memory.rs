@@ -14,6 +14,9 @@ pub(crate) struct MemoryInfo {
     pub ptr: *mut sys::OrtMemoryInfo,
 }
 
+unsafe impl Send for MemoryInfo {}
+unsafe impl Sync for MemoryInfo {}
+
 impl MemoryInfo {
     #[tracing::instrument]
     pub fn new(allocator: AllocatorType, memory_type: MemType) -> Result<Self> {

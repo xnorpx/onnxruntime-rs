@@ -29,6 +29,13 @@ where
     array_view: ArrayView<'t, T, D>,
 }
 
+unsafe impl<'t, T, D> Send for OrtOwnedTensor<'t, T, D>
+where
+    T: TypeToTensorElementDataType + Debug + Clone,
+    D: ndarray::Dimension,
+{
+}
+
 impl<'t, T, D> Deref for OrtOwnedTensor<'t, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
