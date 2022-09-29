@@ -146,7 +146,6 @@ where
 
 fn extract_archive(filename: &Path, output: &Path) {
     match filename.extension().map(|e| e.to_str()) {
-        Some(Some("zip")) => extract_zip(filename, output),
         Some(Some("tgz")) => extract_tgz(filename, output),
         _ => unimplemented!(),
     }
@@ -158,32 +157,6 @@ fn extract_tgz(filename: &Path, output: &Path) {
     let tar = flate2::read::GzDecoder::new(buf);
     let mut archive = tar::Archive::new(tar);
     archive.unpack(output).unwrap();
-}
-
-fn extract_zip(filename: &Path, outpath: &Path) {
-    let file = fs::File::open(&filename).unwrap();
-    let buf = io::BufReader::new(file);
-    let mut archive = zip::ZipArchive::new(buf).unwrap();
-    for i in 0..archive.len() {
-        let mut file = archive.by_index(i).unwrap();
-        #[allow(deprecated)]
-        let outpath = outpath.join(file.sanitized_name());
-        if !(&*file.name()).ends_with('/') {
-            println!(
-                "File {} extracted to \"{}\" ({} bytes)",
-                i,
-                outpath.as_path().display(),
-                file.size(),
-            );
-            if let Some(p) = outpath.parent() {
-                if !p.exists() {
-                    fs::create_dir_all(&p).unwrap();
-                }
-            }
-            let mut outfile = fs::File::create(&outpath).unwrap();
-            io::copy(&mut file, &mut outfile).unwrap();
-        }
-    }
 }
 
 trait OnnxPrebuiltArchive {
