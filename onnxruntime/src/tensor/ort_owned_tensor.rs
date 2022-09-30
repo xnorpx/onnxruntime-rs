@@ -34,6 +34,20 @@ where
     memory_info: &'m MemoryInfo,
 }
 
+unsafe impl<'t, 'm, T, D> Send for OrtOwnedTensor<'t, 'm, T, D>
+where
+    T: TypeToTensorElementDataType + Debug + Clone,
+    D: ndarray::Dimension,
+{
+}
+
+unsafe impl<'t, 'm, T, D> Sync for OrtOwnedTensor<'t, 'm, T, D>
+where
+    T: TypeToTensorElementDataType + Debug + Clone,
+    D: ndarray::Dimension,
+{
+}
+
 impl<'t, 'm, T, D> Deref for OrtOwnedTensor<'t, 'm, T, D>
 where
     T: TypeToTensorElementDataType + Debug + Clone,
